@@ -14,9 +14,9 @@ router
     .route("/")
     .get(userController.getAllUsers.bind(userController));
 router.post('/register', (0, middleware_1.validateReqBody)(validations_1.CreateUserSchema), userController.createUser.bind(userController));
-// router.post('/login', validateReqBody(loginReqBodySchema), loginNewUser);
-// router.route('/:id')
-//   .get(validateJwt(), getUserById)
-//   .put(validateJwt(),updateUser)
-// .delete(validateJwt(), deleteUser)
+router.post('/login', (0, middleware_1.validateReqBody)(validations_1.loginReqBodySchema), userController.loginUser.bind(userController));
+router.route('/:id')
+    .put(userController.updateUser.bind(userController))
+    .delete(userController.deleteUser.bind(userController))
+    .get(userController.getUserById.bind(userController));
 exports.default = router;

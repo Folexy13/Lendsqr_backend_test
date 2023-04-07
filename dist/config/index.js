@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DB_PASS = exports.DB_NAME = exports.PORT = exports.TOKEN_SECRET = exports.CRYPTOJS_KEY = exports.DB_PORT = exports.DB_USER = exports.DB_HOST = void 0;
+exports.PAYSTACK_SECRET_KEY = exports.DB_PASS = exports.DB_NAME = exports.PORT = exports.TOKEN_SECRET = exports.CRYPTOJS_KEY = exports.DB_PORT = exports.DB_USER = exports.DB_HOST = void 0;
 require("./envConfig");
 const ENV = process.env.ENV;
 const PORT = process.env.PORT;
@@ -19,3 +19,5 @@ const DB_NAME = process.env.DB_NAME;
 exports.DB_NAME = DB_NAME;
 const DB_PASS = process.env.DB_PASS;
 exports.DB_PASS = DB_PASS;
+const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
+exports.PAYSTACK_SECRET_KEY = PAYSTACK_SECRET_KEY;

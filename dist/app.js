@@ -21,6 +21,7 @@ exports.default = async (app) => {
     app.use((0, cookie_parser_1.default)());
     app.use((0, compression_1.default)());
     app.use('/user', routes_1.UserRoute);
+    app.use('/transaction', routes_1.TransactionRoute);
     app.get('/', (req, res) => {
         res.send("We dey gidigba");
     });

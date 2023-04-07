@@ -1,5 +1,7 @@
 import {Knex} from 'knex';
 import { UserType } from '../interfaces';
+import { ConflictError, NotFoundError, UnauthorizedError } from '../exceptions';
+import { SHA256 } from 'crypto-js';
 
 export default class UserService {
   private db: Knex;
@@ -9,27 +11,79 @@ export default class UserService {
   }
 
   async getAll(): Promise<UserType[]> {
-    return await this.db('users').select('*');
+    return await this.db('usersTable').select('*');
   }
 
   async getById(id: number): Promise<UserType | null> {
-    const user = await this.db('users').select('*').where({ id }).first();
+    const user = await this.db('usersTable').select('*').where({ id }).first();
     return user || null;
   }
 
-  async create(user: UserType): Promise<UserType> {
-    const [id] = await this.db('users').insert(user);
-    const createdUser = { id, ...user };
+ async create(user: UserType): Promise<UserType> {
+    const existingUser = await this.db('usersTable').where({ email: user.email }).first();
+    if (existingUser) {
+      throw new ConflictError('User Already Exist')
+    }
+
+    // Hash the password using SHA256
+    const hashedPassword = SHA256(user.password).toString();
+
+    // Insert the user into the database with the hashed password
+    const [id] = await this.db('usersTable').insert({ ...user, password: hashedPassword,wallet:0 });
+    
+    // Fetch the inserted user from the database and return it
+    const createdUser = await this.db('usersTable').where({ id }).first();
+    delete createdUser.password; //return without user password for security reason
     return createdUser;
+ }
+ async login(email: string, password: string): Promise<UserType> {
+    // Fetch the user from the database using the email address
+    const user = await this.db('usersTable').where({ email }).first();
+
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    // Hash the provided password using SHA256
+    const hashedPassword = SHA256(password).toString();
+
+    // Compare the hashed password from the request with the hashed password in the database
+    if (user.password !== hashedPassword) {
+      throw new UnauthorizedError('Incorrect credentials');
+    }
+
+    // Remove the password from the user object and return it
+    delete user.password;
+    return user;
+}
+
+ async update(id: number, user: UserType): Promise<{ affectedRows: number }> {
+  // Check if the user is trying to update the ID or email
+  
+  if (user.email !== undefined && user.email !== (await this.getUserEmail(id))) {
+    throw new Error("Cannot update user email");
   }
+//Prevent user from updating thier wallet directly
+   if (user.wallet !== undefined) {
+    throw new Error("Cannot update user Wallet");
+  }
+  // Remove the ID field from the user object to prevent accidental updates
+  delete user.id;
 
-  // async update(id: number, user: UserType): Promise<{ affectedRows: number |  }> {
-  //   const [affectedRows] = await this.db('users').where({ id }).update(user);
-  //   return { affectedRows };
-  // }
+  const affectedRows = await this.db('usersTable').where({ id }).update(user);
+ console.log(affectedRows)
+  return { affectedRows };
+ }
+  private async getUserEmail(id: number): Promise<string> {
+  const user = await this.db('usersTable').select('email').where({ id }).first();
+  if (!user) {
+    throw new Error(`User with ID ${id} not found`);
+  }
+  return user.email;
+}
 
-  // async delete(id: number): Promise<{ affectedRows: number }> {
-  //   const [affectedRows] = await this.db('users').where({ id }).delete();
-  //   return { affectedRows };
-  // }
+  async delete(id: number): Promise<{ affectedRows: number }> {
+    const affectedRows = await this.db('usersTable').where({ id }).delete();
+    return { affectedRows };
+  }
 }

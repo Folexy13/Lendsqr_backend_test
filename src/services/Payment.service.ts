@@ -1,64 +1,145 @@
-import Paystack from "paystack";
+import { Knex } from 'knex';
+import { UserType } from '../interfaces';
+import {  BadRequestError, ConflictError, NotFoundError, UnauthorizedError } from '../exceptions';
+import { PAYSTACK_SECRET_KEY } from '../config';
+import { Paystack } from 'paystack-sdk';
+import { Transfer } from 'paystack-sdk/dist/transfer/transfer';
 
 
-interface IPaystackService {
-  initializeTransaction(amount: number, email: string): Promise<string>;
-  verifyTransaction(reference: string): Promise<boolean>;
-  transferMoney(amount: number, recipient: string): Promise<boolean>;
-}
+export default class PaymentService {
+  private db: Knex;
+  private paystack: Paystack;
+  private transfer: Transfer;
 
-class PaystackService implements IPaystackService {
-    private paystack: any;
-    private webhook: any;
-
-constructor(private readonly apiKey:string, private readonly webhookURL: string) {
-  this.paystack =  Paystack(this.apiKey);
-//   this.webhook =  new Paystack.Webhook(this.apiKey);
-  this.webhook.on('charge.success', this.handleTransactionUpdate.bind(this));
-  this.webhook.setEndpoint(this.webhookURL);
-}
-
-   async initializeTransaction(amount: number, email: string): Promise<string> {
-    const response = await this.paystack.transaction.initialize({
-      amount: amount * 100,
-      email,
-    });
-
-    return response.data.authorization_url;
-  }
-  
-   async verifyTransaction(reference: string): Promise<boolean> {
-    // Wait for the transaction update to be received at the webhook endpoint
-    // Instead of calling the Paystack API to verify the transaction
-    return new Promise((resolve, reject) => {
-      this.webhook.on('charge.success', (transaction: any) => {
-        if (transaction.data.reference === reference && transaction.data.status === 'success') {
-          resolve(true);
-        } else {
-          resolve(false);
-        }
-      });
-
-      setTimeout(() => {
-        reject(new Error('Webhook timeout'));
-      }, 30000);
-    });
+  constructor(db: Knex) {
+    this.db = db;
+    this.paystack = new Paystack(PAYSTACK_SECRET_KEY);
+    this.transfer = new Transfer(PAYSTACK_SECRET_KEY)
   }
 
-  async transferMoney(amount: number, recipient: string): Promise<any> {
-    const response = await this.paystack.transfer.create({
+  async pay(userId: number, amount: number, reference: string): Promise<UserType> {
+    const user = await this.db('usersTable').where({ id: userId }).first();
+
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    const transaction :any = await this.paystack.transaction.initialize({
+      amount: (amount * 100).toString(), // Paystack requires amount to be in kobo (i.e. smallest currency unit)
+      email: user.email,
+      reference,
+    });
+    return {
+      ...user,
+      wallet: user.wallet + amount,
+      transactionId: transaction.data.reference,
+    };
+  }
+
+  async withdraw(userId: number, amount: number): Promise<UserType> {
+    const user = await this.db('usersTable').where({ id: userId }).first();
+
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    if (user.wallet < amount) {
+      throw new UnauthorizedError('Insufficient funds');
+    }
+
+    const transaction:any = await this.paystack.transfer.initiate({
+      source: 'balance', // Withdraw from the Paystack balance
+      amount: amount * 100, // Paystack requires amount to be in kobo (i.e. smallest currency unit)
+      recipient: user.email,
+      reference: `withdrawal-${Date.now()}`,
+    });
+
+    return {
+      ...user,
+      wallet: user.wallet - amount,
+      transactionId: transaction.data.transfer_code,
+    };
+  }
+
+ async fund(userId: number, amount: number): Promise<UserType> {
+  if (!Number.isInteger(userId) || userId < 1) {
+    throw new BadRequestError('Invalid user ID');
+  }
+
+  if (!Number.isInteger(amount) || amount < 1) {
+    throw new BadRequestError('Invalid amount');
+  }
+
+  const user = await this.db('usersTable').where({ id: userId }).first();
+
+  if (!user) {
+    throw new NotFoundError('User not found');
+  }
+
+  const transaction: any = await this.paystack.transaction.initialize({
+    amount: (amount * 100).toString(), // Paystack requires amount to be in kobo (i.e. smallest currency unit)
+    email: user.email,
+    reference: `lendsqr-pay-${Date.now()}`,
+  });
+
+  await this.db('usersTable').where({ id: userId })
+    .update({ wallet: user.wallet + amount });
+
+  delete(user.password)
+
+  return {
+    ...user,
+    wallet: user.wallet,
+    transactionId: transaction.data.reference,
+  };
+}
+
+async initTransfer(senderId: number, receiverId: number, amount: number): Promise<any> {
+    const sender = await this.db('usersTable').where({ id: senderId }).first();
+
+    if (!sender) {
+      throw new ConflictError('Sender not found');
+    }
+    const receiver = await this.db('usersTable').where({ id: receiverId }).first();
+
+    if (!receiver) {
+      throw new ConflictError('Receiver not found');
+    }
+    if (sender.wallet < amount) {
+      throw new BadRequestError('Insufficient funds');
+    }
+
+    const transfer: any = await this.transfer.initiate({
       source: 'balance',
-      amount: amount * 100,
-      recipient,
+      reason:"We rise by lifting others",
+      amount: amount * 100, // Paystack requires amount to be in kobo (i.e. smallest currency unit)
+      recipient: receiver.email,
+      reference: `lendsqr-transfer-${Date.now()}`,
     });
+  if (transfer.status) {
+      await Promise.all([
+        this.db('usersTable').where({ id: senderId }).update({ wallet: sender.wallet - amount }),
+        this.db('usersTable').where({ id: receiverId }).update({ wallet: receiver.wallet + amount }),
+      ]);
 
-    return response.data;
-  }
+      return {
+        senderId: sender.id,
+        receiverId: receiver.id,
+        amount: amount,
+        transferId: transfer.data.reference,
+      };
+    }
+  return transfer
     
-  private handleTransactionUpdate(transaction: any) {
-    console.log(`Transaction update received: ${transaction.data.reference}`);
+}
+  
+async completeTransfer(transferCode: string, otp: string): Promise<any> {
+    try {
+      const transfer = await this.transfer.finalize(transferCode,otp);
+      return transfer;
+    } catch (error:any) {
+      throw new Error(error.message);
+    }
   }
 }
-
-export default PaystackService;
 

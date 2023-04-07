@@ -23,14 +23,16 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const config_1 = require("../config");
 const Knex = __importStar(require("knex"));
-const knex = Knex.knex({
-    client: 'mysql',
+const connectDb = Knex.knex({
+    client: 'mysql2',
     connection: {
-        host: 'localhost',
-        user: 'your_database_user',
-        password: 'your_database_password',
-        database: 'your_database_name',
+        host: config_1.DB_HOST,
+        user: config_1.DB_USER,
+        password: config_1.DB_PASS,
+        database: config_1.DB_NAME,
+        port: config_1.DB_PORT,
     },
 });
-exports.default = knex;
+exports.default = connectDb;

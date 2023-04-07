@@ -4,7 +4,7 @@ import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
 import cookieParser from "cookie-parser";
-import {UserRoute} from './routes'
+import {TransactionRoute, UserRoute} from './routes'
 import { errHandler } from './exceptions';
 
 
@@ -18,6 +18,7 @@ export default async (app: Application) => {
   app.use(compression());
 
   app.use('/user', UserRoute)
+  app.use('/transaction',TransactionRoute)
   
   app.get('/', (req,res) => {
     res.send("We dey gidigba")
