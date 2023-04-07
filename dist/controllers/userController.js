@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserController = void 0;
 const services_1 = require("../services");
+const utils_1 = require("../utils");
 class UserController {
     constructor(knex) {
         this.knex = knex;
@@ -9,16 +10,21 @@ class UserController {
     }
     async getAllUsers(req, res) {
         const users = await this.userService.getAll();
-        return res.status(201).send({ status: "success", message: "Users fetched Succesful", data: users });
+        return res.status(201).send({ status: "success", message: "Users fetched Succesful", response: (0, utils_1.paginate)(users) });
     }
     async getUserById(req, res) {
-        const { id } = req.params;
-        const user = await this.userService.getById(Number(id));
-        if (user) {
-            return res.status(201).send({ status: "success", message: "User fetched Succesful", data: user });
+        try {
+            const { id } = req.params;
+            const user = await this.userService.getById(Number(id));
+            if (user) {
+                return res.status(201).send({ status: "success", message: "User fetched Succesful", data: user });
+            }
+            else {
+                return res.status(404).send({ status: "failed", error: 'User not found' });
+            }
         }
-        else {
-            return res.status(404).send({ status: "failed", error: 'User not found' });
+        catch (err) {
+            return res.status(500).send({ status: "failed", error: err.message });
         }
     }
     async createUser(req, res) {

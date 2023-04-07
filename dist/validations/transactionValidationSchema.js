@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.transferFundSchema = exports.fundWalletSchema = void 0;
 const joi_1 = __importDefault(require("joi"));
 const requiredNumberSchema = joi_1.default.number().required();
+const requiredStringSchema = joi_1.default.string().required();
 exports.fundWalletSchema = joi_1.default.object({
     userId: requiredNumberSchema,
     amount: requiredNumberSchema,

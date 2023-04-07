@@ -1,5 +1,5 @@
 import {Knex} from 'knex';
-import { UserType } from '../interfaces';
+import { IUserType } from '../interfaces';
 import { ConflictError, NotFoundError, UnauthorizedError } from '../exceptions';
 import { SHA256 } from 'crypto-js';
 
@@ -10,17 +10,17 @@ export default class UserService {
     this.db = db;
   }
 
-  async getAll(): Promise<UserType[]> {
-    return await this.db('usersTable').select('*');
+  async getAll(): Promise<IUserType[]> {
+    return await this.db('users').select('*');
   }
 
-  async getById(id: number): Promise<UserType | null> {
-    const user = await this.db('usersTable').select('*').where({ id }).first();
+  async getById(id: number): Promise<IUserType | null> {
+    const user = await this.db('users').select('*').where({ id }).first();
     return user || null;
   }
 
- async create(user: UserType): Promise<UserType> {
-    const existingUser = await this.db('usersTable').where({ email: user.email }).first();
+ async create(user: IUserType): Promise<IUserType> {
+    const existingUser = await this.db('users').where({ email: user.email }).first();
     if (existingUser) {
       throw new ConflictError('User Already Exist')
     }
@@ -29,16 +29,16 @@ export default class UserService {
     const hashedPassword = SHA256(user.password).toString();
 
     // Insert the user into the database with the hashed password
-    const [id] = await this.db('usersTable').insert({ ...user, password: hashedPassword,wallet:0 });
+    const [id] = await this.db('users').insert({ ...user, password: hashedPassword,wallet:0 });
     
     // Fetch the inserted user from the database and return it
-    const createdUser = await this.db('usersTable').where({ id }).first();
+    const createdUser = await this.db('users').where({ id }).first();
     delete createdUser.password; //return without user password for security reason
     return createdUser;
  }
- async login(email: string, password: string): Promise<UserType> {
+ async login(email: string, password: string): Promise<IUserType> {
     // Fetch the user from the database using the email address
-    const user = await this.db('usersTable').where({ email }).first();
+    const user = await this.db('users').where({ email }).first();
 
     if (!user) {
       throw new NotFoundError('User not found');
@@ -57,7 +57,7 @@ export default class UserService {
     return user;
 }
 
- async update(id: number, user: UserType): Promise<{ affectedRows: number }> {
+ async update(id: number, user: IUserType): Promise<{ affectedRows: number }> {
   // Check if the user is trying to update the ID or email
   
   if (user.email !== undefined && user.email !== (await this.getUserEmail(id))) {
@@ -70,12 +70,12 @@ export default class UserService {
   // Remove the ID field from the user object to prevent accidental updates
   delete user.id;
 
-  const affectedRows = await this.db('usersTable').where({ id }).update(user);
+  const affectedRows = await this.db('users').where({ id }).update(user);
  console.log(affectedRows)
   return { affectedRows };
  }
   private async getUserEmail(id: number): Promise<string> {
-  const user = await this.db('usersTable').select('email').where({ id }).first();
+  const user = await this.db('users').select('email').where({ id }).first();
   if (!user) {
     throw new Error(`User with ID ${id} not found`);
   }
@@ -83,7 +83,7 @@ export default class UserService {
 }
 
   async delete(id: number): Promise<{ affectedRows: number }> {
-    const affectedRows = await this.db('usersTable').where({ id }).delete();
+    const affectedRows = await this.db('users').where({ id }).delete();
     return { affectedRows };
   }
 }

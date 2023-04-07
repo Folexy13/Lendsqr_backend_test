@@ -1,5 +1,5 @@
 
-import { UserType } from "./user.interface";
-import { TransferCompletionData,TransferInitiationData,TransferInitiationResponse,TransferRecipient } from "./payemnt.interface";
+import { IUserType } from "./user.interface";
+import {IPaystackBank,IAccountNameEnqury,IPaymentInitializeResponse,IPaystackResolveAccount,IPaymentInitializeRequest,IPaymentResponse,IPaymentTransferRequest } from "./payemnt.interface";
 
-export { UserType,TransferCompletionData,TransferInitiationData,TransferInitiationResponse,TransferRecipient};
+export { IUserType,IPaystackBank,IAccountNameEnqury,IPaymentInitializeResponse ,IPaystackResolveAccount,IPaymentInitializeRequest,IPaymentResponse,IPaymentTransferRequest};

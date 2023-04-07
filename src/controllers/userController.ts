@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
-import { UserType } from '../interfaces';
+import { IUserType } from '../interfaces';
 import { Knex } from 'knex';
 import { UserService } from '../services';
+import { paginate } from '../utils';
 
 export class UserController {
   private userService: UserService;
@@ -12,10 +13,11 @@ export class UserController {
 
   async getAllUsers(req: Request, res: Response): Promise<void | Response> {
     const users = await this.userService.getAll();
-    return res.status(201).send({status:"success",message:"Users fetched Succesful",data:users})
+    return res.status(201).send({status:"success",message:"Users fetched Succesful",response:paginate(users)})
   }
 
-  async getUserById(req: Request, res: Response): Promise<void | Response> {
+async getUserById(req: Request, res: Response): Promise<void | Response> {
+  try {
     const { id } = req.params;
     const user = await this.userService.getById(Number(id));
     if (user) {
@@ -23,12 +25,15 @@ export class UserController {
     } else {
       return res.status(404).send({ status:"failed",error: 'User not found' });
     }
+  } catch (err:any) {
+    return res.status(500).send({ status: "failed", error: err.message });
   }
-
+}
+  
   async createUser(req: Request, res: Response): Promise<void | Response> {
     try {
       const { name, email, password, wallet } = req.body;
-      const newUser: UserType = { name, email, password, wallet };
+      const newUser: IUserType = { name, email, password, wallet };
       const createdUser = await this.userService.create(newUser);
       return res.status(201).send({status:"success",message:"Registration Successful",data:createdUser});
     } catch (error:any) {
@@ -49,7 +54,7 @@ export class UserController {
     try {
       const { id } = req.params;
       const { name, email, password, wallet } = req.body;
-      const updatedUser: UserType = { id: Number(id), name, email, password, wallet };
+      const updatedUser: IUserType = { id: Number(id), name, email, password, wallet };
       const result:any = await this.userService.update(Number(id), updatedUser);
       if (result.affectedRows === 0) {
         res.status(404).send({ status:"failed",error: 'User not found' });

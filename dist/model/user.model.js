@@ -4,7 +4,7 @@ exports.User = void 0;
 const objection_1 = require("objection");
 class User extends objection_1.Model {
     static get tableName() {
-        return 'usersTable';
+        return 'users';
     }
 }
 exports.User = User;

@@ -9,6 +9,7 @@ const DB_PORT = Number(process.env.DB_PORT);
 const DB_NAME = process.env.DB_NAME;
 const DB_PASS = process.env.DB_PASS;
 const PAYSTACK_SECRET_KEY:any = process.env.PAYSTACK_SECRET_KEY
+const PAYSTACK_BASE_URL:any = process.env.PAYSTACK_BASE_URL
 
 export {
   DB_HOST,
@@ -18,5 +19,6 @@ export {
   PORT,
   DB_NAME,
   DB_PASS,
-  PAYSTACK_SECRET_KEY
+  PAYSTACK_SECRET_KEY,
+  PAYSTACK_BASE_URL
 };

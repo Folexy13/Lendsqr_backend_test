@@ -2,7 +2,7 @@ import { Model } from 'objection';
 
 export class User extends Model {
   static get tableName(): string {
-    return 'usersTable';
+    return 'users';
   }
 
   id!: number;

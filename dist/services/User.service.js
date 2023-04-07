@@ -7,29 +7,29 @@ class UserService {
         this.db = db;
     }
     async getAll() {
-        return await this.db('usersTable').select('*');
+        return await this.db('users').select('*');
     }
     async getById(id) {
-        const user = await this.db('usersTable').select('*').where({ id }).first();
+        const user = await this.db('users').select('*').where({ id }).first();
         return user || null;
     }
     async create(user) {
-        const existingUser = await this.db('usersTable').where({ email: user.email }).first();
+        const existingUser = await this.db('users').where({ email: user.email }).first();
         if (existingUser) {
             throw new exceptions_1.ConflictError('User Already Exist');
         }
         // Hash the password using SHA256
         const hashedPassword = (0, crypto_js_1.SHA256)(user.password).toString();
         // Insert the user into the database with the hashed password
-        const [id] = await this.db('usersTable').insert(Object.assign(Object.assign({}, user), { password: hashedPassword, wallet: 0 }));
+        const [id] = await this.db('users').insert(Object.assign(Object.assign({}, user), { password: hashedPassword, wallet: 0 }));
         // Fetch the inserted user from the database and return it
-        const createdUser = await this.db('usersTable').where({ id }).first();
+        const createdUser = await this.db('users').where({ id }).first();
         delete createdUser.password; //return without user password for security reason
         return createdUser;
     }
     async login(email, password) {
         // Fetch the user from the database using the email address
-        const user = await this.db('usersTable').where({ email }).first();
+        const user = await this.db('users').where({ email }).first();
         if (!user) {
             throw new exceptions_1.NotFoundError('User not found');
         }
@@ -54,19 +54,19 @@ class UserService {
         }
         // Remove the ID field from the user object to prevent accidental updates
         delete user.id;
-        const affectedRows = await this.db('usersTable').where({ id }).update(user);
+        const affectedRows = await this.db('users').where({ id }).update(user);
         console.log(affectedRows);
         return { affectedRows };
     }
     async getUserEmail(id) {
-        const user = await this.db('usersTable').select('email').where({ id }).first();
+        const user = await this.db('users').select('email').where({ id }).first();
         if (!user) {
             throw new Error(`User with ID ${id} not found`);
         }
         return user.email;
     }
     async delete(id) {
-        const affectedRows = await this.db('usersTable').where({ id }).delete();
+        const affectedRows = await this.db('users').where({ id }).delete();
         return { affectedRows };
     }
 }

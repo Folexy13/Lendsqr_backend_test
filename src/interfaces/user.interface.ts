@@ -1,5 +1,5 @@
 
-export interface UserType{
+export interface IUserType{
     name: string,
     password: string,
     email: string,
