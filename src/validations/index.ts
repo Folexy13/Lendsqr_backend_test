@@ -1,5 +1,5 @@
 
 import { CreateUserSchema, loginReqBodySchema } from "./userValidationSchema"
-import { fundWalletSchema,transferFundSchema } from "./transactionValidationSchema"
+import { fundWalletSchema,transferFundSchema,withdrawFundSchema,verifyWithdraw } from "./transactionValidationSchema"
 
-export { CreateUserSchema ,loginReqBodySchema,fundWalletSchema,transferFundSchema}
+export { CreateUserSchema ,loginReqBodySchema,fundWalletSchema,transferFundSchema,withdrawFundSchema,verifyWithdraw}

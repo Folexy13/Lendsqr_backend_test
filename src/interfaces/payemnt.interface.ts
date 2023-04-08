@@ -17,7 +17,8 @@ export interface IPaystackResolveAccount {
 }
 
 export interface IPaymentInitializeRequest  {
-    amount: number,
+  amount: number,
+  accountNumber?:number
      userId?: IUser
 }
 

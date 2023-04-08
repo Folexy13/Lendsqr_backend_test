@@ -1,4 +1,5 @@
 import { DB_HOST, DB_NAME, DB_PASS, DB_PORT, DB_USER } from "../config";
+import {yellow,red} from 'colorette'
 
 import * as Knex from "knex";
 const connectDb = Knex.knex({
@@ -12,4 +13,16 @@ const connectDb = Knex.knex({
   },
 });
 
+
+const checkDatabaseConnection = async () => {
+  try {
+    await connectDb.raw('SELECT 1');
+    console.log(yellow('Database is up and running...'));
+  } catch (error:any) {
+    console.error('Database is not running:', red(error.message));
+  }
+};
+
+checkDatabaseConnection()
 export default connectDb;
+

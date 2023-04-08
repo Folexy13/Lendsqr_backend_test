@@ -1,2 +1,3 @@
 import paginate from "./pagination";
-export {paginate}
+import { numToString } from "./some";
+export {paginate,numToString}

@@ -2,6 +2,7 @@ import express from "express";
 import http from "http";
 import { PORT} from "./config";
 import createApp from "./app";
+import { bold, greenBright } from "colorette";
 
 const startApp = async () => {
   const app = express();
@@ -15,7 +16,7 @@ const startApp = async () => {
       console.log(`initiated Api Service`);
     })
     .on("listening", () =>
-      console.log(`Api Service listening on port 3123`)
+      console.log(bold(greenBright(`Api Service listening on port 3123`)))
     )
     .on("error", (err: any) => {
       console.log(err);

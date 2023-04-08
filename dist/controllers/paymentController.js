@@ -14,6 +14,11 @@ class PaymentController {
         const users = await this.TransactionService.getAll();
         return res.status(201).send({ status: "success", message: "Transactions fetched Succesful", response: (0, utils_1.paginate)(users) });
     }
+    async getAllBanks(req, res) {
+        const { country } = req.params;
+        const banks = await this.TransactionService.getBankList(country);
+        return res.status(201).send({ status: "success", message: "Paystack banks", banks });
+    }
     async pay(req, res) {
         const { userId, amount } = req.body;
         try {
@@ -24,22 +29,30 @@ class PaymentController {
             res.status(error.statusCode || 500).send({ status: "failed", message: error.message });
         }
     }
-    async verify(req, res) {
-        const { reference } = req.params;
+    async withdraw(req, res) {
         try {
-            const user = await this.TransactionService.verify(reference);
-            res.status(200).send({ status: "success", messge: `Payment was ${user.gateway_response}` });
+            const response = await this.TransactionService.withdraw(req.body);
+            if (response.status === 'otp') {
+                return res.status(200).send({ status: "success", message: "Check your email for Otp to continue with the transaction" });
+            }
+            return res.status(200).send({ status: "success", message: "Your payment has been initiated successfully" });
         }
         catch (error) {
-            res.status(error.statusCode || 500).send({ status: "failed", message: error.message });
+            console.log(error);
+            return res.status(error.statusCode || 500).send({ message: error.message });
         }
     }
-    async withdraw(req, res) {
-        const { userId, amount } = req.body;
+    async verifyWithdraw(req, res) {
         try {
+            const { reference, otp } = req.body;
+            const response = await this.TransactionService.verifyWithdraw(reference, otp);
+            console.log(response);
+            if (response.status === 'success') {
+                return res.status(200).send({ status: "success", message: "Otp verified!,you should receive your money anytime soon" });
+            }
         }
         catch (error) {
-            res.status(error.statusCode || 500).json({ message: error.message });
+            return res.status(error.statusCode || 500).send({ message: error.response.data.message });
         }
     }
     async transfer(req, res) {
@@ -50,6 +63,13 @@ class PaymentController {
         catch (error) {
             return res.status(400).send({ status: "failed", message: error.message ? error.message : error });
         }
+    }
+    async verify(req, res) {
+        const { event, data } = req.body;
+        console.log('webhook is called');
+        console.log(req.body);
+        await this.TransactionService.verify(event, data);
+        res.send(200);
     }
 }
 exports.PaymentController = PaymentController;

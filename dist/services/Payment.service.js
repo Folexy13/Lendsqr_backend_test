@@ -1,87 +1,73 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const axios_1 = __importDefault(require("axios"));
 const exceptions_1 = require("../exceptions");
-const config_1 = require("../config");
+const api_1 = require("../api");
+const utils_1 = require("../utils");
 class TransactionService {
     constructor(db) {
         this.db = db;
-        this.paystackBaseUrl = config_1.PAYSTACK_BASE_URL;
+        this.api = new api_1.PaystackApi();
     }
     async getAll() {
         return await this.db('transactions').select('*');
     }
-    async getBankList(country) {
-        const baseUrl = this.paystackBaseUrl + `/bank/?country=${country}`;
-        const headers = {
-            Authorization: `Bearer ${config_1.PAYSTACK_SECRET_KEY}`,
-            'content-type': 'application/json',
-            'cache-control': 'no-cache'
-        };
+    async getBankList(query) {
+        const baseURL = `/bank?country=${query}`;
         try {
-            const response = await axios_1.default.get(baseUrl, { headers });
-            if (!response.data && response.status !== 200) {
-                throw new Error('An error occurred with our third party. Please try again at a later time.');
+            const response = await this.api.get(baseURL);
+            if (!response && response.status !== 200) {
+                throw new exceptions_1.BadRequestError('An error occurred with our third party. Please try again at a later time.');
             }
-            const paystackBanks = response.data.data;
+            const paystackBanks = response;
             return paystackBanks;
         }
         catch (error) {
-            throw new exceptions_1.BadRequestError('An error occurred with our third party. Please try again at a later time.');
+            throw error;
         }
     }
     async accountNameInquiry(data) {
         const { bankCode, accountNumber } = data;
-        const baseURL = this.paystackBaseUrl + `/bank/resolve?account_number=${accountNumber}&bank_code=${bankCode}`;
-        const headers = {
-            Authorization: `Bearer ${config_1.PAYSTACK_SECRET_KEY}`,
-            'content-type': 'application/json',
-            'cache-control': 'no-cache'
-        };
+        const url = `/bank/resolve?account_number=${accountNumber}&bank_code=${bankCode}`;
         try {
-            const response = await axios_1.default.get(baseURL, { headers });
-            if (!response.data && response.status !== 200) {
-                throw new exceptions_1.BadRequestError('An error occurred with our third party. Please try again at a later time.');
-            }
-            const payStackResolveAccount = response.data.data;
+            const response = await this.api.get(url);
+            const payStackResolveAccount = response;
             return payStackResolveAccount;
         }
         catch (e) {
+            console.log(e);
             throw new exceptions_1.BadRequestError('An error occurred with our third party. Please try again at a later time.');
         }
     }
+    async createRecipient(data) {
+        const url = `/transferrecipient`;
+        try {
+            const response = await this.api.post(url, Object.assign(Object.assign({}, data), { account_number: data.accountNumber, bank_code: (0, utils_1.numToString)(data.bankCode) }));
+            return response.recipient_code;
+        }
+        catch (error) {
+            throw error;
+        }
+    }
     async pay(data) {
-        const { userId, amount } = data;
+        const { userId, amount, accountNumber } = data;
         try {
             const user = await this.db('users').where({ id: userId }).first();
             if (!user) {
                 throw new exceptions_1.NotFoundError('User not found');
             }
-            const base_url = this.paystackBaseUrl + `/transaction/initialize`;
-            const headers = {
-                Authorization: `Bearer ${config_1.PAYSTACK_SECRET_KEY}`,
-                'content-type': 'application/json',
-                'cache-control': 'no-cache'
-            };
+            const url = `/transaction/initialize`;
             const chargeAmount = (amount || 0) * 100;
             const payload = {
                 amount: chargeAmount,
                 email: user.email,
+                account_number: Number(accountNumber),
                 metadata: {
                     full_name: user.name
                 }
             };
-            const response = await axios_1.default.post(base_url, payload, {
-                headers
-            });
-            if (!response.data && response.status !== 200) {
-                throw new exceptions_1.BadRequestError('An error occurred with our third party. Please try again at a later time.');
-            }
-            const { authorization_url, reference, access_code } = response.data.data;
-            await this.db('transactions').insert({ reference, type: "Wallet Funding", user_id: user.id, amount: chargeAmount / 100, gateway: "Paystack", status: 'pending' });
+            const response = await this.api.post(url, payload);
+            const { authorization_url, reference, access_code } = response;
+            await this.db('transactions').insert({ reference, type: "deposit", user_id: user.id, amount: chargeAmount / 100, gateway: "Paystack", status: 'pending' });
             return {
                 paymentProviderRedirectUrl: authorization_url,
                 paymentReference: reference,
@@ -89,60 +75,54 @@ class TransactionService {
             };
         }
         catch (e) {
-            console.log(`e message`, e.message);
-            console.log(e.stack);
+            console.log("na here we dey ooo");
             throw e;
         }
     }
-    async verify(reference) {
-        const isTransaction = await this.db('transactions').where({ reference }).first();
+    async withdraw(data) {
+        const { userId, amount } = data;
+        const user = await this.db('users').where({ id: userId }).first();
+        const url = '/transfer';
+        if (!user) {
+            throw new exceptions_1.NotFoundError('User not found');
+        }
+        if (user.wallet < amount) {
+            throw new exceptions_1.BadRequestError('Insufficient funds');
+        }
         try {
+            const recipientCode = await this.createRecipient(Object.assign(Object.assign({}, data), { type: "nuban", accountNumber: Number(data.accountNumber) }));
+            let payload = { "source": 'balance', amount, recipient: recipientCode, reference: `lendsqr-${Date.now()}`, reason: "Withdrawal" };
+            const response = await this.api.post(url, payload);
+            await this.db('transactions').insert({
+                transfer_ref: response.transfer_code,
+                reference: response.reference,
+                type: 'withdraw',
+                status: 'pending',
+                amount: response.amount,
+                user_id: userId,
+                gateway: 'Paystack'
+            });
+            return response;
+        }
+        catch (error) {
+            console.log("Na d guy be this ooo");
+            throw error;
+        }
+    }
+    async verifyWithdraw(reference, otp) {
+        try {
+            const isTransaction = await this.db('transactions').where({ reference }).first();
+            const url = '/transfer/finalize_transfer';
             if (!isTransaction) {
-                throw new exceptions_1.NotFoundError('Transaction not found');
+                throw new exceptions_1.NotFoundError('This transaction does not exist');
             }
-            if (isTransaction.status === "completed") {
-                throw new exceptions_1.ConflictError('Transaction already verified');
-            }
-            const user = await this.db('users').where({ id: isTransaction.user_id }).first();
-            const baseURL = this.paystackBaseUrl + `/transaction/verify/${reference}`;
-            const headers = {
-                Authorization: `Bearer ${config_1.PAYSTACK_SECRET_KEY}`,
-                'content-type': 'application/json',
-                'cache-control': 'no-cache'
-            };
-            const response = await axios_1.default.get(baseURL, { headers });
-            if (!response.data && response.status !== 200) {
-                throw new exceptions_1.BadRequestError('An error occurred with our third party. Please try again at a later time.');
-            }
-            const verificationResponse = response.data.data;
-            await this.db('users').where({ id: user.id }).update({ wallet: user.wallet + isTransaction.amount });
-            await this.db('transactions').where({ reference }).update({ status: "completed" });
-            return verificationResponse;
+            const response = await this.api.post(url, { transfer_code: isTransaction.transfer_ref, otp: otp });
+            return response;
         }
         catch (error) {
             throw error;
         }
     }
-    // async withdraw(userId: number, amount: number): Promise<IUserType> {
-    //   const user = await this.db('users').where({ id: userId }).first();
-    //   if (!user) {
-    //     throw new NotFoundError('User not found');
-    //   }
-    //   if (user.wallet < amount) {
-    //     throw new UnauthorizedError('Insufficient funds');
-    //   }
-    //   const transaction:any = await this.paystack.transfer.initiate({
-    //     source: 'balance', // Withdraw from the Paystack balance
-    //     amount: amount * 100, // Paystack requires amount to be in kobo (i.e. smallest currency unit)
-    //     recipient: user.email,
-    //     reference: `withdrawal-${Date.now()}`,
-    //   });
-    //   return {
-    //     ...user,
-    //     wallet: user.wallet - amount,
-    //     transactionId: transaction.data.transfer_code,
-    //   };
-    // }
     async transfer(data) {
         const { senderId, receiverId, amount } = data;
         try {
@@ -155,14 +135,32 @@ class TransactionService {
                 throw new exceptions_1.NotFoundError(`${!sender ? "Sender" : "Receiver"} not found`);
             }
             let reference = 'lendsqr-transfer' + Date.now();
-            await this.db('transactions').insert({ reference, type: "Transfer", amount, status: 'completed', user_id: senderId, gateway: 'Paystack' });
-            await this.db('transactions').insert({ reference, type: "Gift", amount, status: 'completed', user_id: receiverId, gateway: 'Paystack' });
+            await this.db('transactions').insert({ reference, type: "transfer-debit", amount, status: 'completed', user_id: senderId, gateway: 'Paystack' });
+            await this.db('transactions').insert({ reference, type: "transfer-credit", amount, status: 'completed', user_id: receiverId, gateway: 'Paystack' });
             await this.db('users').where({ id: senderId }).update({ wallet: sender.wallet - amount });
             await this.db('users').where({ id: receiverId }).update({ wallet: receiver.wallet + amount });
             return { status: "success", message: "Transfer was successful" };
         }
         catch (error) {
             throw error;
+        }
+    }
+    async verify(event, data) {
+        const isTransaction = await this.db('transactions').where({ reference: data.reference }).first();
+        const user = await this.db('users').where({ id: isTransaction.user_id }).first();
+        if (event === "charge.success") {
+            await this.db('users').where({ id: isTransaction.user_id }).update({ wallet: (data.amount / 100) + user.wallet });
+            await this.db('transactions').where({ reference: data.reference }).update({ status: "completed" });
+        }
+        if (event === "transfer.success") {
+            await this.db('users').where({ id: isTransaction.user_id }).update({ wallet: user.wallet + (data.amount) });
+            await this.db('transactions').where({ reference: data.reference }).update({ status: "completed" });
+        }
+        if (event === "transfer.failed") {
+            await this.db('transactions').where({ reference: data.reference }).update({ status: "failed" });
+        }
+        if (event === "transfer.reversed") {
+            await this.db('transactions').where({ reference: data.reference }).update({ status: "reversed" });
         }
     }
 }

@@ -24,6 +24,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const config_1 = require("../config");
+const colorette_1 = require("colorette");
 const Knex = __importStar(require("knex"));
 const connectDb = Knex.knex({
     client: 'mysql2',
@@ -35,4 +36,14 @@ const connectDb = Knex.knex({
         port: config_1.DB_PORT,
     },
 });
+const checkDatabaseConnection = async () => {
+    try {
+        await connectDb.raw('SELECT 1');
+        console.log((0, colorette_1.yellow)('Database is up and running...'));
+    }
+    catch (error) {
+        console.error('Database is not running:', (0, colorette_1.red)(error.message));
+    }
+};
+checkDatabaseConnection();
 exports.default = connectDb;

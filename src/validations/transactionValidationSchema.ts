@@ -15,3 +15,16 @@ export const transferFundSchema = Joi.object({
     amount:requiredNumberSchema,
 });
 
+export const withdrawFundSchema = Joi.object({
+    userId:requiredNumberSchema,
+    amount:requiredNumberSchema,
+    accountNumber:requiredNumberSchema,
+    bankCode: requiredStringSchema,
+    currency:requiredStringSchema
+});
+
+
+export const verifyWithdraw = Joi.object({
+    otp: requiredNumberSchema,
+    reference:requiredStringSchema
+})
