@@ -30,7 +30,8 @@
     "start": "tsc && node dist/server.js",
     "migrate": "knex migrate:latest --knexfile=./src/knexFile.js",
     "dev": "tsc-watch --onSuccess \"node ./dist/server.js\"",
-    "just": "tsc-watch --onSuccess \"ts-node ./src/server.ts\""
+    "just": "tsc-watch --onSuccess \"ts-node ./src/server.ts\"",
+    "compose":"docker-compose up --build"
   },
   "dependencies": {
     "@types/knex": "^0.16.1",

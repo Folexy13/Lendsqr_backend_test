@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { Knex } from 'knex';
-import TransactionService from '../services/Payment.service';
 import { paginate } from '../utils';
+import { TransactionService } from '../services';
 
 export class PaymentController {
   private TransactionService: TransactionService;

@@ -1,14 +1,11 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PaymentController = void 0;
-const Payment_service_1 = __importDefault(require("../services/Payment.service"));
 const utils_1 = require("../utils");
+const services_1 = require("../services");
 class PaymentController {
     constructor(db) {
-        this.TransactionService = new Payment_service_1.default(db);
+        this.TransactionService = new services_1.TransactionService(db);
     }
     async getAllTransactions(req, res) {
         const users = await this.TransactionService.getAll();

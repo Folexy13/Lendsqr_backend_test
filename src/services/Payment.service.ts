@@ -7,7 +7,7 @@ import { numToString } from '../utils';
 
 export default class TransactionService {
   private db: Knex;
-  private api :PaystackApi
+  public api :PaystackApi
 
   constructor(db: Knex) {
     this.db = db;
