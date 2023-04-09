@@ -59,7 +59,6 @@ export default class UserService {
 
  async update(id: number, user: IUserType): Promise<{ affectedRows: number }> {
   // Check if the user is trying to update the ID or email
-  
   if (user.email !== undefined && user.email !== (await this.getUserEmail(id))) {
     throw new Error("Cannot update user email");
   }

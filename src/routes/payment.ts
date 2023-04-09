@@ -1,7 +1,7 @@
 import express from "express";
 import { validateReqBody } from "../middleware";
 import knex from "../database";
-import { PaymentController } from "../controllers/paymentController";
+import { PaymentController } from "../controllers/transactionController";
 import { fundWalletSchema, transferFundSchema, verifyWithdraw, withdrawFundSchema } from "../validations";
 
 

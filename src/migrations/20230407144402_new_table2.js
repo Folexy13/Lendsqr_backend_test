@@ -19,7 +19,7 @@ exports.up = function (knex) {
       table.string("type").notNullable();
       table.integer("amount").notNullable();
       table.string("status").notNullable();
-      table.string("transfer_ref").notNullable();
+      table.string("transfer_ref").nullable();
       table.integer("user_id").unsigned().references("id").inTable("users");
       table.string("gateway").defaultTo("Paystack");
       table.timestamp("created_at").defaultTo(knex.fn.now()).notNullable();
