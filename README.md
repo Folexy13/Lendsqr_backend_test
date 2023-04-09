@@ -11,6 +11,10 @@ This project is built with Mysql, Knex Orm,NodeJs Language and Typescript. Integ
 - Paystack API key
 - Knex ORM
 
+## E-R Diagram
+
+![E-R diagram](https://res.cloudinary.com/folajimidev/image/upload/v1681078651/Screenshot_from_2023-04-09_23-13-37_gzo4kw.png)
+
 ## Download and Installations
 
 - To Download Mysql database server go to [Mysql download](https://dev.mysql.com/downloads/)
