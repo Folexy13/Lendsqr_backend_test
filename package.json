@@ -33,9 +33,9 @@
     "just": "tsc-watch --onSuccess \"ts-node ./src/server.ts\"",
     "compose":"docker-compose up --build"
   },
-  "engines": {
-    "node": "16.x"
-  },
+ "engines": {
+  "node": "^14.17.0"
+},
   "dependencies": {
     "@types/knex": "^0.16.1",
     "@types/swagger-jsdoc": "^6.0.1",
