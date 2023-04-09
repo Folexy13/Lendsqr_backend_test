@@ -19,7 +19,7 @@ This project is built with Mysql, Knex Orm,NodeJs Language and Typescript. Integ
 
 ## Environment Variables
 
-To run this project, you will need to add the following environment variables to your .env file or just edit the .env.example file. `Note:` That `PAYSTACK_BASE_URL` variable is already declared in the .env.example file for look up and also the `PAYSTACK_SECRET_KEY` is the test key and no real transaction is made.
+To run this project, you will need to add the following environment variables to your .env file or just edit the .env.example file. `Note:` That `PAYSTACK_BASE_URL` variable is already declared in the .env.example file for look up.
 
 `TOKEN_SECRET`
 
