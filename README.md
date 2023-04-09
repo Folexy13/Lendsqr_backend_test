@@ -1,4 +1,3 @@
-
 # Lendsqr Backend Test
 
 ## Introduction
@@ -7,24 +6,20 @@ This project is built with Mysql, Knex Orm,NodeJs Language and Typescript. Integ
 
 ## Prerequisites
 
-* Node.Js
-* MySQL database server
-* Paystack API key
-* Knex ORM
+- Node.Js
+- MySQL database server
+- Paystack API key
+- Knex ORM
 
 ## Download and Installations
 
-* To Download Mysql database server go to [Mysql download](https://dev.mysql.com/downloads/)
+- To Download Mysql database server go to [Mysql download](https://dev.mysql.com/downloads/)
 
-* To Download Nodejs. go to [Node.js Official Website](https://nodejs.org/en/)
-
-
-
-
+- To Download Nodejs. go to [Node.js Official Website](https://nodejs.org/en/)
 
 ## Environment Variables
 
-To run this project, you will need to add the following environment variables to your .env file or just edit the .env.example file. `Note:` That `PAYSTACK_BASE_URL` variable is already declared in the .env.example file for llok up and also the `PAYSTACK_SECRET_KEY` is the test key and no real transaction is made.
+To run this project, you will need to add the following environment variables to your .env file or just edit the .env.example file. `Note:` That `PAYSTACK_BASE_URL` variable is already declared in the .env.example file for look up and also the `PAYSTACK_SECRET_KEY` is the test key and no real transaction is made.
 
 `TOKEN_SECRET`
 
@@ -39,7 +34,6 @@ To run this project, you will need to add the following environment variables to
 `PAYSTACK_SECRET_KEY`
 
 `DB_HOST`
-
 
 ## Run Locally
 
@@ -61,7 +55,6 @@ Start the server
   yarn start
 ```
 
-
 ## Running Tests
 
 To run tests, run the following command
@@ -69,4 +62,3 @@ To run tests, run the following command
 ```bash
   yarn test
 ```
-
