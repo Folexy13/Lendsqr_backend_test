@@ -32,7 +32,9 @@ class PaymentController {
             if (response.status === 'otp') {
                 return res.status(200).send({ status: "success", message: "Check your email for Otp to continue with the transaction" });
             }
-            return res.status(200).send({ status: "success", message: "Your payment has been initiated successfully" });
+            if (response.status === "success") {
+                return res.status(200).send({ status: "success", message: "Your payment has been initiated successfully" });
+            }
         }
         catch (error) {
             console.log(error);

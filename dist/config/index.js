@@ -2,8 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PAYSTACK_BASE_URL = exports.PAYSTACK_SECRET_KEY = exports.DB_PASS = exports.DB_NAME = exports.PORT = exports.TOKEN_SECRET = exports.CRYPTOJS_KEY = exports.DB_PORT = exports.DB_USER = exports.DB_HOST = void 0;
 require("./envConfig");
-const ENV = process.env.ENV;
-const PORT = process.env.PORT;
+const ENV = process.env.NODE_ENV;
+const PORT = ENV === "development" ? 3123 : process.env.PORT;
 exports.PORT = PORT;
 const CRYPTOJS_KEY = process.env.CRYPTOJS_KEY;
 exports.CRYPTOJS_KEY = CRYPTOJS_KEY;

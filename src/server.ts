@@ -12,11 +12,11 @@ const startApp = async () => {
   const server = http.createServer(app);
 
   server
-    .listen(3123, (): void => {
+    .listen(PORT, (): void => {
       console.log(`initiated Api Service`);
     })
     .on("listening", () =>
-      console.log(bold(greenBright(`Api Service listening on port 3123`)))
+      console.log(bold(greenBright(`Api Service listening on port ${PORT}`)))
     )
     .on("error", (err: any) => {
       console.log(err);

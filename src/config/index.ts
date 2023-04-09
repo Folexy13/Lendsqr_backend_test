@@ -1,6 +1,6 @@
 import "./envConfig";
-const ENV: any = process.env.ENV;
-const PORT = process.env.PORT;
+const ENV: any = process.env.NODE_ENV;
+const PORT =ENV ==="development"?3123: process.env.PORT;
 const CRYPTOJS_KEY = process.env.CRYPTOJS_KEY;
 const TOKEN_SECRET = process.env.TOKEN_SECRET;
 const DB_HOST = process.env.DB_HOST;
