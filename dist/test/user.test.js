@@ -146,10 +146,14 @@ describe('UserService', () => {
             const id = user.id;
             const updatedUser = {
                 name: 'Testing Aluko',
+                email: 'testingfola@example.com',
+                password: 'newpassword123',
             };
             const result = await userService.update(id, updatedUser);
             expect(result.affectedRows).toBe(1);
             expect(user.name).toBe(updatedUser.name);
+            expect(user.email).toBe(updatedUser.email);
+            expect(user.password).toBe(updatedUser.password);
             expect(user.wallet).toBe(100);
         });
         it('should throw an error if the email is updated', async () => {
