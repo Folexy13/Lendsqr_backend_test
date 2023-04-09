@@ -63,7 +63,7 @@ describe('getById', () => {
       
   
   // Insert a new user with name 'Testing User'
-  const [id] = await connectDb('users').insert({ name: 'Testing User', email: 'testing1@example.com', password: 'password' });
+  const [id] = await connectDb('users').insert({ name: 'Testing User', email: 'testing1@example.com', password: 'password' ,wallet:0});
   
   // Retrieve the user by ID
   const user = await userService.getById(id);
@@ -83,7 +83,7 @@ describe('getById', () => {
 
 describe('create', () => {
   it('should create a new user', async () => {
-    const newUser: IUserType = { name: 'Testing User', email: 'testing2@example.com', password: 'password' };
+    const newUser: IUserType = { name: 'Testing User', email: 'testing2@example.com', password: 'password',wallet:0 };
     const userExists = await connectDb('users').select('id').where('email', 'testing2@example.com').first();
     if (userExists) {
       await connectDb('users').where('id', userExists.id).delete();
@@ -96,7 +96,7 @@ describe('create', () => {
   });
 
   it('should throw a ConflictError for an existing email address', async () => {
-    const existingUser: IUserType = { name: 'Testing Iyunade', email: 'testing3@example.com', password: 'password' };
+    const existingUser: IUserType = { name: 'Testing Iyunade', email: 'testing3@example.com', password: 'password',wallet:0 };
     const userExists = await connectDb('users').select('id').where('email', 'testing3@example.com').first();
     if (userExists) {
       await connectDb('users').where('id', userExists.id).delete();
@@ -108,15 +108,13 @@ describe('create', () => {
 });
 
 describe('login', () => {
- 
-
   it('should log in a user with correct credentials', async () => {
     const existingUser: IUserType = { name: 'Testing User', email: 'testing4@example.com', password: 'password' };
       const userExists = await connectDb('users').select('id').where('email', 'testing4@example.com').first();
     if (userExists) {
       await connectDb('users').where('id', userExists.id).delete();
     }
-    await connectDb('users').insert({ ...existingUser, password: SHA256(existingUser.password).toString()});
+    await connectDb('users').insert({ ...existingUser, password: SHA256(existingUser.password).toString(),wallet:0});
     const loggedInUser = await userService.login('testing4@example.com', 'password');
     expect(loggedInUser.name).toBe('Testing User');
     expect(loggedInUser.email).toBe('testing4@example.com');
@@ -133,7 +131,7 @@ describe('login', () => {
     if (userExists) {
       await connectDb('users').where('id', userExists.id).delete();
     }
-    await connectDb('users').insert({ ...existingUser, password: SHA256(existingUser.password).toString() });
+    await connectDb('users').insert({ ...existingUser, password: SHA256(existingUser.password).toString(),wallet:0 });
     await expect(userService.login('testing4@example.com', 'wrongpassword')).rejects.toThrowError(UnauthorizedError);
   });
 
@@ -150,71 +148,71 @@ describe('login', () => {
     if (userExists) {
       await connectDb('users').where('id', userExists.id).delete();
     }
-    await connectDb('users').insert({ ...existingUser, password: SHA256(existingUser.password).toString() });
+    await connectDb('users').insert({ ...existingUser, password: SHA256(existingUser.password).toString(),wallet:0 });
     await expect(userService.login('testing2@example.com', 'wrongpassword')).rejects.toThrowError(UnauthorizedError);
   });
 });
 
 
-describe('update and delete', () => {
+describe('update user', () => {
   let existingUser: IUserType;
 
   beforeEach(async () => {
-    // Create a new user and insert them into the database
     existingUser = { name: 'Testing User', email: 'testing2@example@example.com', password: 'password' };
-    await connectDb('users').insert({ ...existingUser, password: SHA256(existingUser.password).toString()});
+    await connectDb('users').insert({ ...existingUser, password: SHA256(existingUser.password).toString(),wallet:0});
   });
 
   afterEach(async () => {
-    // Delete the user from the database
     await connectDb('users').where({ email: existingUser.email }).delete();
   });
 
-  it('should update an existing user', async () => {
-    // Update the user's name 
+  it('should update an existing user name', async () => {
     const updatedUser = { name: 'Testing Ruth' };
-     const userExists = await connectDb('users').select('id').where('email', 'testing2@example.com').first();
-    const result = await userService.update(userExists.id, {...updatedUser,email:userExists.email,password:userExists.password,wallet:userExists.wallet || 0});
+    const userExists = await connectDb('users').select('id').where('email', 'testing1@example.com').first();
+    const result = await userService.update(userExists.id, {...updatedUser,...userExists});
 
-    // Check that the update was successful
     expect(result.affectedRows).toBe(1);
-
-    // Retrieve the user from the database and check that their name and email were updated
+    
     const user = await connectDb('users').select('*').where({ email: userExists.email }).first();
-    expect(user.name).toBe(userExists.name);
-    expect(user.email).toBe(userExists.email);
+    expect(user.name).toBe(updatedUser.name);
+    expect(user.email).toBe(existingUser.email);
     expect(user.password).toBeDefined();
   });
-
-
   it('should not allow users to update their email', async () => {
-    // Attempt to update the user's email
-    const updatedUser = { email: 'testing2@example.com' };
-     const userExists = await connectDb('users').select('id').where('email', 'testing3@example.com').first();
-    await expect(userService.update(1, {...updatedUser,password:userExists.password,name:userExists.name,wallet:userExists.wallet || 0})).rejects.toThrowError('Cannot update user email');
+    const updatedUser = { email: 'testing1@example.com' };
+    const userExists = await connectDb('users').select('id').where('email', 'testing3@example.com').first();
+    await expect(userService.update(userExists.id, {...updatedUser,...userExists})).rejects.toThrowError('Cannot update user email');
   });
 
   it('should not allow users to update their wallet', async () => {
-    // Attempt to update the user's wallet
     const updatedUser = { wallet: 100 };
-     const userExists = await connectDb('users').select('id').where('email', 'testing3@example.com').first();
-    await expect(userService.update(1, {...updatedUser,...userExists})).rejects.toThrowError('Cannot update user Wallet');
+    const userExists = await connectDb('users').select('id').where('email', 'testing3@example.com').first();
+    await expect(userService.update(userExists.id, {...updatedUser,...userExists})).rejects.toThrowError('Cannot update user Wallet');
+  });
+});
+
+describe('delete user', () => {
+  let existingUser: IUserType;
+
+  beforeEach(async () => {
+    existingUser = { name: 'Testing User', email: 'testing6@example@example.com', password: 'password' };
+    await connectDb('users').insert({ ...existingUser, password: SHA256(existingUser.password).toString(),wallet:0});
+  });
+
+  afterEach(async () => {
+    await connectDb('users').where({ email: existingUser.email }).delete();
   });
 
   it('should delete an existing user', async () => {
-    // Delete the user from the database
     const result = await userService.delete(existingUser.id || 1);
 
-    // Check that the delete was successful
     expect(result.affectedRows).toBe(1);
 
-    // Attempt to retrieve the user from the database and ensure that they are not found
     const user = await connectDb('users').select('*').where({ email: existingUser.email }).first();
     expect(user).toBeUndefined();
   });
 
   it('should throw an error when attempting to delete a non-existent user', async () => {
-    // Attempt to delete a non-existent user
     await expect(userService.delete(1000)).rejects.toThrowError('User with ID 1000 not found');
   });
 });

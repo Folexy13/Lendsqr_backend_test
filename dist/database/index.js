@@ -42,7 +42,7 @@ const checkDatabaseConnection = async () => {
         console.log((0, colorette_1.yellow)('Database is up and running...'));
     }
     catch (error) {
-        console.error('Database is not running:', (0, colorette_1.red)(error.message));
+        console.error(`Database is not running: ${error.message}`);
     }
 };
 checkDatabaseConnection();

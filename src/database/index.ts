@@ -19,10 +19,9 @@ const checkDatabaseConnection = async () => {
     await connectDb.raw('SELECT 1');
     console.log(yellow('Database is up and running...'));
   } catch (error:any) {
-    console.error('Database is not running:', red(error.message));
+    console.error(`Database is not running: ${error.message}` );
   }
 };
 
 checkDatabaseConnection()
 export default connectDb;
-
