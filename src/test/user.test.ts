@@ -177,6 +177,7 @@ describe('update user', () => {
         email: 'testingfola@example.com',
         password: 'newpassword123',
       };
+    
       const result = await userService.update(id, updatedUser);
       expect(result.affectedRows).toBe(1);
       expect(user.name).toBe(updatedUser.name);
