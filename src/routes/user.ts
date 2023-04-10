@@ -20,3 +20,5 @@ router.route('/:id')
   .delete(userController.deleteUser.bind(userController))
   .get(userController.getUserById.bind(userController))
 export default router;
+
+

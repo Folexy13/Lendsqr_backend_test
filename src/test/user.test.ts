@@ -157,20 +157,18 @@ describe('login', () => {
 describe('update user', () => {
   beforeEach(async () => {
         const userExists = await connectDb('users').select('id').where('email', 'testingfola@example.com').first();
-    if (userExists) {
-      await connectDb('users').where('id', userExists.id).delete();
-    }
+    if (!userExists) {
       await connectDb('users').insert({
         name: 'Testing Fola',
         email: 'testingfola@example.com',
         password: 'password123',
         wallet: 100,
       });
+    }
      
     });
 
    
-
   it('should update the user details', async () => {
       const user = await connectDb('users').where({ email:"testingfola@example.com" }).first();
       const id = user.id;

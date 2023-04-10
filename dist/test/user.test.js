@@ -131,15 +131,14 @@ describe('UserService', () => {
     describe('update user', () => {
         beforeEach(async () => {
             const userExists = await (0, database_1.default)('users').select('id').where('email', 'testingfola@example.com').first();
-            if (userExists) {
-                await (0, database_1.default)('users').where('id', userExists.id).delete();
+            if (!userExists) {
+                await (0, database_1.default)('users').insert({
+                    name: 'Testing Fola',
+                    email: 'testingfola@example.com',
+                    password: 'password123',
+                    wallet: 100,
+                });
             }
-            await (0, database_1.default)('users').insert({
-                name: 'Testing Fola',
-                email: 'testingfola@example.com',
-                password: 'password123',
-                wallet: 100,
-            });
         });
         it('should update the user details', async () => {
             const user = await (0, database_1.default)('users').where({ email: "testingfola@example.com" }).first();
